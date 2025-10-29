@@ -1,0 +1,30 @@
+{
+  "current_anime_index": 2,
+  "current_episode": 1,
+  "downloaded_anime": [],
+  "failed_downloads": [],
+  "completed_anime": [
+    {
+      "anime_number": 30,
+      "title": "Seishun Buta Yarou Wa Santa Claus No Yume Wo Minai Dub",
+      "episodes": "13/13",
+      "url": "https://animixplay.name/v1/seishun-buta-yarou-wa-santa-claus-no-yume-wo-minai-dub",
+      "completed_date": "2025-10-29 19:03:33"
+    },
+    {
+      "anime_number": 33,
+      "title": "Dekin No Mogura Dub",
+      "episodes": "12/12",
+      "url": "https://animixplay.name/v1/dekin-no-mogura-dub",
+      "completed_date": "2025-10-29 19:37:34"
+    }
+  ],
+  "current_anime_details": {
+    "title": "Dekin No Mogura Dub",
+    "total_episodes": 12,
+    "downloaded_episodes": 0,
+    "anime_url": "https://animixplay.name/v1/dekin-no-mogura-dub",
+    "anime_number": 33,
+    "episodes_downloaded": []
+  }
+}

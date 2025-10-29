@@ -293,9 +293,11 @@ def ffmpeg_download_m3u8(m3u8_url: str, headers: Dict[str, str], output_path: Pa
         str(output_path),
     ]
     try:
-        subprocess.run(cmd, check=True)
+        subprocess.run(cmd, check=True, timeout=60*20)
         return True
     except subprocess.CalledProcessError:
+        return False
+    except subprocess.TimeoutExpired:
         return False
 
 
@@ -350,6 +352,9 @@ def yt_dlp_download_m3u8(m3u8_url: str, headers: Dict[str, str], output_path: Pa
         "--retry-sleep", "1",
         # Speed tweaks
         "--http-chunk-size", "25M",
+        # Robustness (only options widely supported across versions)
+        "--retries", "15",
+        "--socket-timeout", "30",
     ] + header_args
     if prefer_mp4:
         args += ["--merge-output-format", "mp4", "--remux-video", "mp4"]
@@ -365,9 +370,11 @@ def yt_dlp_download_m3u8(m3u8_url: str, headers: Dict[str, str], output_path: Pa
     except Exception:
         pass
     try:
-        subprocess.run(args, check=True)
+        subprocess.run(args, check=True, timeout=60*20)
         return True
     except subprocess.CalledProcessError:
+        return False
+    except subprocess.TimeoutExpired:
         return False
 
 

@@ -5,6 +5,7 @@ import json
 import re
 import time
 import subprocess
+import os
 import threading
 from pathlib import Path
 from typing import List, Dict, Any
@@ -24,7 +25,7 @@ from src.download import (
     DEFAULT_UA,
     yt_dlp_download_m3u8,
 )
-def start_progress_server(download_file: str, host: str = "127.0.0.1", port: int = 5000) -> None:
+def start_progress_server(download_file: str, host: str = "0.0.0.0", port: int = None) -> None:
     """Start a tiny Flask server to serve download progress JSON."""
     try:
         from flask import Flask, jsonify
@@ -51,8 +52,10 @@ def start_progress_server(download_file: str, host: str = "127.0.0.1", port: int
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
+    # Respect Render/Heroku-style PORT if available
+    bind_port = port if port is not None else int(os.environ.get("PORT", "5000"))
     # Blocking call; intended to run in a daemon thread
-    app.run(host=host, port=port, debug=False, use_reloader=False, threaded=True)
+    app.run(host=host, port=bind_port, debug=False, use_reloader=False, threaded=True)
 
 
 
@@ -402,11 +405,11 @@ def main() -> None:
         # Start Flask progress server in background
         server_thread = threading.Thread(
             target=start_progress_server,
-            args=(downloader.download_file, "127.0.0.1", 5000),
+            args=(downloader.download_file, "0.0.0.0", int(os.environ.get("PORT", "5000"))),
             daemon=True,
         )
         server_thread.start()
-        print("🌐 Progress web link: http://127.0.0.1:5000/")
+        print(f"🌐 Progress web link: http://127.0.0.1:{os.environ.get('PORT', '5000')}/")
         
         # Continuous loop: download next, then upload via Telegram, repeat
         while True:

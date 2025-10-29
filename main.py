@@ -411,7 +411,7 @@ def main() -> None:
         server_thread.start()
         print(f"🌐 Progress web link: http://127.0.0.1:{os.environ.get('PORT', '5000')}/")
         
-        # Continuous loop: download next, then upload via Telegram, repeat
+        # Continuous loop: download → upload → advance → repeat
         while True:
             anime, episode_num, progress_info = downloader.get_next_episode_to_download()
             if not anime:
@@ -420,69 +420,51 @@ def main() -> None:
 
             anime_title = anime.get('title', '')
             total_episodes = downloader.get_total_episodes(anime)
-            anime_number = anime.get('anime_number', 0)
-
-            current_details = downloader.download_progress.get("current_anime_details", {})
-            downloaded_count = current_details.get("downloaded_episodes", 0)
-
-            print(f"📺 Current Anime: {anime_title}")
-            print(f"🔢 Anime Number: {anime_number}")
-            print(f"📊 Episode: {episode_num}/{total_episodes}")
-            print(f"📈 Progress: {downloaded_count}/{total_episodes} episodes downloaded")
-            print(f"🔗 Base URL: {anime.get('url', '')}")
-
-            # Download the episode
+            print(f"▶ Download Ep {episode_num}: {anime_title}")
             success = download_single_episode(anime, episode_num, args)
 
             if success:
-                # After successful download, run telegram uploader to send available files
+                print("⬆ Uploading queue via Telegram...")
                 run_telegram_uploader()
 
-                # Update progress for next episode
+                # Advance progress to next episode
                 current_index, current_episode = progress_info
                 downloader.download_progress["current_anime_index"] = current_index
                 downloader.download_progress["current_episode"] = current_episode + 1
 
-                anime_title = anime.get('title', '')
+                # Update detail snapshot for UI
                 downloaded_count = downloader.count_downloaded_episodes(anime_title, total_episodes)
                 downloaded_list = downloader.get_downloaded_episodes_list(anime_title, total_episodes)
-
                 downloader.download_progress["current_anime_details"] = {
                     "title": anime_title,
                     "total_episodes": total_episodes,
                     "downloaded_episodes": downloaded_count,
                     "anime_url": anime.get('url', ''),
-                    "anime_number": anime_number,
+                    "anime_number": anime.get('anime_number', 0),
                     "episodes_downloaded": downloaded_list
                 }
 
-                # If last episode, mark completed and move to next anime
+                # If finished series, move to next anime index
                 if current_episode >= total_episodes:
-                    completed_anime_info = {
-                        "anime_number": anime_number,
-                        "title": anime_title,
-                        "episodes": f"{total_episodes}/{total_episodes}",
-                        "url": anime.get('url', ''),
-                        "completed_date": time.strftime("%Y-%m-%d %H:%M:%S")
-                    }
-                    if not any(comp["anime_number"] == anime_number for comp in downloader.download_progress.get("completed_anime", [])):
-                        downloader.download_progress.setdefault("completed_anime", []).append(completed_anime_info)
-                    downloader.download_progress["current_anime_index"] = current_index + 1
+                    downloader.download_progress["completed_anime"] = downloader.download_progress.get("completed_anime", [])
+                    if not any(comp.get("anime_number") == anime.get('anime_number', 0) for comp in downloader.download_progress["completed_anime"]):
+                        downloader.download_progress["completed_anime"].append({
+                            "anime_number": anime.get('anime_number', 0),
+                            "title": anime_title,
+                            "episodes": f"{total_episodes}/{total_episodes}",
+                            "url": anime.get('url', ''),
+                            "completed_date": time.strftime("%Y-%m-%d %H:%M:%S")
+                        })
+                    downloader.download_progress["current_anime_index"] = downloader.download_progress.get("current_anime_index", 0) + 1
                     downloader.download_progress["current_episode"] = 1
-                    print(f"🎉 Completed anime: {anime_title}")
-                    print(f"➡️  Moving to next anime...")
-                else:
-                    print(f"➡️  Next episode: {current_episode + 1}")
 
                 downloader.save_download_progress()
-                # Small rest to avoid hammering
-                time.sleep(2)
+                continue
             else:
-                print(f"❌ Failed to download episode {episode_num}")
-                # Optional: wait before retrying next
-                time.sleep(2)
+                print(f"❌ Failed Ep {episode_num}, retrying next...")
+                time.sleep(1)
+                continue
 
-        print("\n✅ Finished loop. Run again to continue, if needed.")
         return
     
     # Original functionality for specific URLs

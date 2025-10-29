@@ -347,9 +347,8 @@ def download_single_episode(anime: Dict[str, Any], episode_num: int, args) -> bo
             except Exception:
                 pass
         
-        # MP4 remux
-        target_mp4_name = output_ts.with_suffix(".mp4").name
-        mp4_path = ensure_output_path(target_mp4_name, output_ts.with_suffix(".mp4").name)
+        # MP4 remux: write alongside .ts (project downloads folder)
+        mp4_path = output_ts.with_suffix(".mp4")
         ok = optional_ffmpeg_mp4(output_ts, mp4_path)
         if ok:
             try:

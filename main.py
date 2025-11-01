@@ -419,8 +419,21 @@ def main() -> None:
 
             anime_title = anime.get('title', '')
             total_episodes = downloader.get_total_episodes(anime)
-            print(f"▶ Download Ep {episode_num}: {anime_title}")
-            success = download_single_episode(anime, episode_num, args)
+            
+            # Retry logic: try up to 3 times per episode
+            max_retries = 3
+            success = False
+            for attempt in range(1, max_retries + 1):
+                print(f"▶ Download Ep {episode_num}: {anime_title} (attempt {attempt}/{max_retries})")
+                success = download_single_episode(anime, episode_num, args)
+                
+                if success:
+                    break
+                elif attempt < max_retries:
+                    print(f"⚠️ Attempt {attempt} failed, retrying in 2 seconds...")
+                    time.sleep(2)
+                else:
+                    print(f"❌ Failed Ep {episode_num} after {max_retries} attempts, skipping to next episode...")
 
             if success:
                 print("⬆ Uploading queue via Telegram...")
@@ -456,13 +469,20 @@ def main() -> None:
                         })
                     downloader.download_progress["current_anime_index"] = downloader.download_progress.get("current_anime_index", 0) + 1
                     downloader.download_progress["current_episode"] = 1
-
-                downloader.save_download_progress()
-                continue
             else:
-                print(f"❌ Failed Ep {episode_num}, retrying next...")
-                time.sleep(1)
-                continue
+                # After 3 failed attempts, skip to next episode anyway
+                current_index, current_episode = progress_info
+                downloader.download_progress["current_anime_index"] = current_index
+                downloader.download_progress["current_episode"] = current_episode + 1
+                
+                # If this was the last episode, move to next anime
+                if current_episode >= total_episodes:
+                    downloader.download_progress["current_anime_index"] = downloader.download_progress.get("current_anime_index", 0) + 1
+                    downloader.download_progress["current_episode"] = 1
+
+            downloader.save_download_progress()
+            time.sleep(1)  # Small delay before next episode
+            continue
 
         return
     

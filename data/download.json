@@ -142,15 +142,15 @@
     }
   ],
   "current_anime_details": {
-    "anime_number": 55,
-    "anime_url": "https://animixplay.name/v1/city-the-animation-dub",
-    "downloaded_episodes": 0,
-    "episodes_downloaded": [],
     "title": "City The Animation Dub",
-    "total_episodes": 13
+    "total_episodes": 13,
+    "downloaded_episodes": 0,
+    "anime_url": "https://animixplay.name/v1/city-the-animation-dub",
+    "anime_number": 55,
+    "episodes_downloaded": []
   },
   "current_anime_index": 20,
-  "current_episode": 5,
+  "current_episode": 9,
   "downloaded_anime": [],
   "failed_downloads": []
 }
